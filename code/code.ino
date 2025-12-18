@@ -15,35 +15,35 @@ const int Coi    = 9;
 #define BIP_1      1
 #define BIP_2      2
 
-static bool protected = false;
-unsigned int temp = 0;
+static bool isProtected = false;
+uint8_t temp = 0;
 bool previousMillisSet = true;
 unsigned long previousMillis = 0;
 unsigned long currentMillis = 0;
 const unsigned long interval = 12000; // 12 giay
 char val = ' ';
-String statusRelay1,statusRelay2;
-const unsigned int8 PASSWORD_VALUE[2] = {3,1}; // mang luu gia tri mat khau dung
-unsigned int8 password_input[2]; // mang luu gia tri mat khau nhap
-unsigned int8 i;
+String statusRelay1,statusRelay2, data;
+const uint8_t PASSWORD_VALUE[2] = {3,1}; // mang luu gia tri mat khau dung
+uint8_t password_input[2]; // mang luu gia tri mat khau nhap
+uint8_t i;
 bool control_mode = false; // false che do dieu khien dang tat, true che do dieu khien dang bat
 
 void control_buzzer();
 
-void control_buzzer(unsigned int para) {
+void control_buzzer(uint8_t para) {
     if (para == BIP_2) {
-        digitalWrite(Buzzer2, HIGH);
+        digitalWrite(Coi, HIGH);
         delay(300);
-        digitalWrite(Buzzer2, LOW);
+        digitalWrite(Coi, LOW);
         delay(300);
-        digitalWrite(Buzzer2, HIGH);
+        digitalWrite(Coi, HIGH);
         delay(300);
-        digitalWrite(Buzzer2, LOW);
+        digitalWrite(Coi, LOW);
 }
     if (para == BIP_1) {
-        digitalWrite(Buzzer2, HIGH);
+        digitalWrite(Coi, HIGH);
         delay(300);
-        digitalWrite(Buzzer2, LOW);
+        digitalWrite(Coi, LOW);
     }
 }
 
@@ -74,7 +74,7 @@ void loop() {
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Phan code tu dong tat den sau 60s
     if ((digitalRead(Sensor1) == HIGH) && (digitalRead(Sensor2) == HIGH) && (digitalRead(Sensor3) == LOW)) {
-        protected = true;
+        isProtected = true;
         control_buzzer(BIP_2); // Kich hoat buzzer 2 bip
         delay(7000); // Cho 7 giay
         digitalWrite(Relay1, LOW); // Tat den
@@ -82,9 +82,10 @@ void loop() {
 
     // Phan code dieu khien buzzer, den va may tinh
 
-    if ((digitalRead(Sensor1) == LOW) && (digitalRead(Sensor2) == LOW) && (protected == true)) {
+    if ((digitalRead(Sensor1) == LOW) && (digitalRead(Sensor2) == LOW) && (isProtected == true)) {
 
-        if previousMillisSet {
+        if (previousMillisSet) {
+            while (millis() > (4294967295 - interval)) {} // Cho den khi millis khong bi tran
             previousMillis = millis();
             previousMillisSet = false;
         }
@@ -94,15 +95,15 @@ void loop() {
             temp++;
         }
         if (temp >= 3) {
-            protected = false;
+            isProtected = false;
             temp = 0;
             digitalWrite(Relay1, HIGH); // Bat den
         }
 
         currentMillis = millis();
-        if (unsigned long)(currentMillis - previousMillis >= interval) {
+        if (currentMillis - previousMillis >= interval) {
 
-            protected = false;
+            isProtected = false;
 
             digitalWrite(Relay4, HIGH);
             delay(1000); // Cho 1 giay
@@ -116,7 +117,7 @@ void loop() {
 
     if ((digitalRead(Sensor1) == HIGH) && (digitalRead(Sensor2) == HIGH) && (digitalRead(Sensor3) == HIGH))
     {
-        protected = false;
+        isProtected = false;
         previousMillisSet = true;
         temp = 0;
         control_buzzer(BIP_2); // Kich hoat buzzer 2 bip
@@ -183,4 +184,23 @@ void loop() {
     val=' ';
 
     ///////////////////////////////////END DK RELAY BANG HC05//////////////////////////////////////
+
+    ///////////////////////////////////DK COI QUA CONG SERIAL MAY TINH///////////////////////////////////////
+
+    if (Serial.available())
+    {
+        data=Serial.readStringUntil('\r');
+        if (data == "batcoi")
+        {
+            digitalWrite(Coi, HIGH);
+            Serial.println("Dabatcoi");
+            delay(25000); // Cho 25 giay
+            digitalWrite(Coi, LOW);
+            Serial.println("Datatcoi");
+            delay(10000); // Cho 10 giay
+        }
+    }
+
+    ///////////////////////////////END DK COI QUA CONG SERIAL MAY TINH///////////////////////////////////////
+
 }
