@@ -14,7 +14,8 @@ const int Coi    = 9;
 
 #define BIP_1      1
 #define BIP_2      2
-#define BIP_LONG   255
+#define BIP_3      3
+#define BIP_4      4
 
 uint8_t isProtected = 0;
 bool isFirstRun = true;
@@ -31,48 +32,99 @@ const uint8_t PASSWORD_VALUE[2] = {3,1}; // mang luu gia tri mat khau dung
 uint8_t password_input[2]; // mang luu gia tri mat khau nhap
 uint8_t i;
 bool control_mode = false; // false che do dieu khien dang tat, true che do dieu khien dang bat
-bool sensor3_previous_state; // HIGH -> true, LOW -> false
-bool sensor3_current_state; // HIGH -> true, LOW -> false
-bool sensor4_previous_state; // HIGH -> true, LOW -> false
-bool sensor4_current_state; // HIGH -> true, LOW -> false
+static int sensor3_previous_state; // HIGH -> true, LOW -> false
+static int sensor3_current_state; // HIGH -> true, LOW -> false
+static int sensor4_previous_state; // HIGH -> true, LOW -> false
+static int sensor4_current_state; // HIGH -> true, LOW -> false
+static int sensor1_previous_state; // HIGH -> true, LOW -> false
+static int sensor1_current_state; // HIGH -> true, LOW -> false
 
-void control_buzzer();
+void control_buzzer(uint8_t para);
+int down_edge_detector_Sensor3();
+int down_edge_detector_Sensor4();
+int down_edge_detector_Sensor1();
+int digitalReadAdj(int pin);
 
 void control_buzzer(uint8_t para) {
     if (para == BIP_2) {
         digitalWrite(Buzzer, HIGH);
-        delay(300);
+        delay(500);
         digitalWrite(Buzzer, LOW);
-        delay(300);
+        delay(2000);
         digitalWrite(Buzzer, HIGH);
-        delay(300);
+        delay(500);
         digitalWrite(Buzzer, LOW);
+        delay(2000);
 }
     if (para == BIP_1) {
         digitalWrite(Buzzer, HIGH);
-        delay(300);
+        delay(500);
         digitalWrite(Buzzer, LOW);
+        delay(2000);
     }
-    if (para == BIP_LONG) {
+    if (para == BIP_3)
+    {
         digitalWrite(Buzzer, HIGH);
-        delay(1500); // Cho 1.5 giay
+        delay(500);
         digitalWrite(Buzzer, LOW);
+        delay(2000);
+        digitalWrite(Buzzer, HIGH);
+        delay(500);
+        digitalWrite(Buzzer, LOW);
+        delay(2000);
+        digitalWrite(Buzzer, HIGH);
+        delay(500);
+        digitalWrite(Buzzer, LOW);
+        delay(2000);
+    }
+    if (para == BIP_4)
+    {
+        digitalWrite(Buzzer, HIGH);
+        delay(500);
+        digitalWrite(Buzzer, LOW);
+        delay(2000);
+        digitalWrite(Buzzer, HIGH);
+        delay(500);
+        digitalWrite(Buzzer, LOW);
+        delay(2000);
+        digitalWrite(Buzzer, HIGH);
+        delay(500);
+        digitalWrite(Buzzer, LOW);
+        delay(2000);
+        digitalWrite(Buzzer, HIGH);
+        delay(500);
+        digitalWrite(Buzzer, LOW);
+        delay(2000);
     }
 }
 
-// Ham bat xung canh xuong, tra ve gia tri true neu co xung canh xuong, nguoc lai tra ve false
-bool down_edge_detector(int pin) {
-    if (pin == 5) { // Sensor3
-        if ((sensor3_previous_state == true) && (sensor3_current_state == false)) { return true; }
-        else { return false; }
+int digitalReadAdj(int pin) { // Tra ve gia tri 0 hoac 1 sau khi loc nhieu lan
+    int sum = 0;
+    for (int i = 0; i < 10; i++) { // Đọc giá trị 10 lần
+        sum += digitalRead(pin);
+        delay(5); // Đợi 5ms giữa các lần đọc
     }
-    if (pin == 6) { // Sensor4
-        if ((sensor4_previous_state == true) && (sensor4_current_state == false)) { return true; }
-        else { return false; }
-    }
+    // Nếu trung bình >= 0.5, trả về HIGH, ngược lại trả về LOW
+    return (sum >= 5) ? HIGH : LOW;
+}
+
+int down_edge_detector_Sensor3() {
+    if ((sensor3_previous_state == 1) && (sensor3_current_state == 0)) { return 1; }
+    else { return 0; }
+}
+
+int down_edge_detector_Sensor4() {
+    if ((sensor4_previous_state == 1) && (sensor4_current_state == 0)) { return 1; }
+    else { return 0; }
+}
+
+int down_edge_detector_Sensor1() {
+    if ((sensor1_previous_state == 1) && (sensor1_current_state == 0)) { return 1; }
+    else { return 0; }
 }
 
 void setup() {
+    delay(5000);
     pinMode(Sensor1, INPUT);
     pinMode(Sensor2, INPUT);
     pinMode(Sensor3, INPUT);
@@ -99,29 +151,29 @@ void setup() {
 
     // Phat am thanh qua buzzer de bao he thong khoi dong
     control_buzzer(BIP_2); // Kich hoat buzzer 2 bip
-    delay(5000); // Cho 5 giay de nguoi dung co the set up he thong
+    delay(5000); // Cho 5 giay
 
 }
 
 void loop() {
 
-    delay(5000);//////////////////////////////////////////////////
     if (isFirstRun2) {
-        sensor3_previous_state = digitalRead(Sensor3);
-        sensor4_previous_state = digitalRead(Sensor4);
+        sensor3_previous_state = digitalReadAdj(Sensor3);
+        sensor4_previous_state = digitalReadAdj(Sensor4);
+        sensor1_previous_state = digitalReadAdj(Sensor1);
         isFirstRun2 = false;
     }
-    }
-    sensor3_current_state = digitalRead(Sensor3);
-    sensor4_current_state = digitalRead(Sensor4);
+
+    sensor3_current_state = digitalReadAdj(Sensor3);
+    sensor4_current_state = digitalReadAdj(Sensor4);
+    sensor1_current_state = digitalReadAdj(Sensor1);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     if (isProtected == 0) {
-        if (down_edge_detector(Sensor4)) { Serial.println("dang chay 1"); //111111111111111111111111111111111111111111111111111111111;
-         temp++; }
-        if (temp = 3) {
-            delay(500);
+        if (down_edge_detector_Sensor4()) { temp++; }
+        if (temp >= 3) {
+            delay(1000);
             isProtected = 2;
             control_buzzer(BIP_1); // Kich hoat buzzer 1 bip
             temp = 0;
@@ -129,33 +181,33 @@ void loop() {
     }
 
     if (isProtected == 2) {
-        Serial.println("dang chay 2"); //2222222222222222222222222222222222222222222222222222
-        if (down_edge_detector(Sensor4)) { temp++; }
-        if (temp = 3) {
-            delay(500);
+        if (down_edge_detector_Sensor4()) { temp++; }
+        if (temp >= 3) {
+            delay(1000);
             isProtected = 0;
-            control_buzzer(BIP_LONG); // Kich hoat buzzer bao tat chuc nang bao ve
+            control_buzzer(BIP_4); // Kich hoat buzzer bao tat chuc nang bao ve
             temp = 0;
         }
     }
 
-    // Kiem tra trang thai bien isProtected
-    if (digitalRead(Sensor4) == LOW) {
-        Serial.println("dang chay 3"); //3333333333333333333333333333333333333333333333333
+    // Kiem tra trang thai bien isProtected, tac dong Sensor4 trong khoang thoi gian lon hon interval2 de kiem tra
+    if (digitalReadAdj(Sensor4) == LOW) {
         while (millis() >= (4294967295 - interval2)) {} // Cho den khi millis khong bi tran
         previousMillis = millis();
-        while (digitalRead(Sensor4) == LOW) {} // Cho den khi khong con tac dong
+        while (digitalReadAdj(Sensor4) == LOW) {} // Cho den khi khong con tac dong
         currentMillis = millis();
         if (currentMillis - previousMillis >= interval2) {
-            if (isProtected == 0) { control_buzzer(BIP_LONG); } // Kich hoat buzzer bao tat chuc nang bao ve
+            if (isProtected == 0) { control_buzzer(BIP_4); } // Kich hoat buzzer bao tat chuc nang bao ve
             else if (isProtected == 1) { control_buzzer(BIP_2); } // Kich hoat buzzer 2 bip
             else if (isProtected == 2) { control_buzzer(BIP_1); } // Kich hoat buzzer 1 bip
+        }
+        else {
+            temp++;
         }
     }
 
     // Phan code tu dong tat den
-    if ((digitalRead(Sensor1) == LOW) && (digitalRead(Sensor3) == HIGH) && (isProtected == 0)) {
-        Serial.println("dang chay 4"); //444444444444444444444444444444444444444444444444444444
+    if ((down_edge_detector_Sensor1()) && (isProtected == 0)) {
         isProtected = 1;
         control_buzzer(BIP_2); // Kich hoat buzzer 2 bip
         delay(5000); // Cho 5 giay
@@ -163,9 +215,7 @@ void loop() {
     }
 
     // Phan code dieu khien coi, den va may tinh
-
-    if ((digitalRead(Sensor1) == HIGH) && (isProtected == 1)) {
-        Serial.println("dang chay 5"); //55555555555555555555555555555555555555555555555555
+    if ((digitalReadAdj(Sensor1) == HIGH) && (isProtected == 1)) {
 
         if (previousMillisSet) {
             while (millis() >= (4294967295 - interval)) {} // Cho den khi millis khong bi tran
@@ -173,12 +223,12 @@ void loop() {
             previousMillisSet = false;
         }
 
-        if (down_edge_detector(Sensor4)) { temp++; }
+        if (down_edge_detector_Sensor4() == 1) { temp++; }
 
-        if (temp = 3) {
-            delay(500);
+        if (temp >= 3) {
+            delay(1000);
             isProtected = 0;
-            control_buzzer(BIP_LONG); // Kich hoat buzzer bao tat chuc nang bao ve
+            control_buzzer(BIP_4); // Kich hoat buzzer bao tat chuc nang bao ve
             temp = 0;
             digitalWrite(Relay1, HIGH); // Bat den
             previousMillisSet = true;
@@ -212,9 +262,8 @@ void loop() {
         }
     }
 
-    if ((digitalRead(Sensor1) == LOW) && down_edge_detector(Sensor3))
+    if ((digitalReadAdj(Sensor1) == LOW) && down_edge_detector_Sensor3() == 1)
     {
-        Serial.println("dang chay 6"); //666666666666666666666666666666666666666666666666666
         control_buzzer(BIP_2); // Kich hoat buzzer 2 bip
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -250,6 +299,10 @@ void loop() {
             delay(300);
             control_buzzer(BIP_1); // Kich hoat buzzer 2 bip
         }
+        else {
+            delay(300);
+            control_buzzer(BIP_3); // Kich hoat buzzer 4 bip
+        }
     }
     
     // Che do dieu khien
@@ -272,8 +325,7 @@ void loop() {
     // Thoat che do dieu khien
     if ( val == '9' && control_mode == true ) { // nhan 9 de thoat che do dieu khien
         control_mode = false;
-        delay(300);
-        control_buzzer(BIP_2); // Kich hoat buzzer 2 bip
+        control_buzzer(BIP_4); // Kich hoat buzzer 4 bip
     }
     
     val=' ';
