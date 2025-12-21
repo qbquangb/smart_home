@@ -9,7 +9,7 @@ const int Sensor4 = 6; // Sensor tat buzzer2, co tac dong -> LOW, khong tac dong
 const int Relay1 = 13; // Relay bat den
 const int Relay2 = 12; // Relay bat quat
 const int Relay4 = 11; // Relay bat may tinh
-const int Buzzer = 10;
+const int Buzzer = 2; // ?????????????????????????????????????????????????? 10
 const int Coi    = 9;
 
 #define BIP_1      1
@@ -44,6 +44,8 @@ int down_edge_detector_Sensor3();
 int down_edge_detector_Sensor4();
 int down_edge_detector_Sensor1();
 int digitalReadAdj(int pin);
+bool isValidChar(char c);
+char getValidCharFromHC05();
 
 void control_buzzer(uint8_t para) {
     if (para == BIP_2) {
@@ -121,6 +123,21 @@ int down_edge_detector_Sensor4() {
 int down_edge_detector_Sensor1() {
     if ((sensor1_previous_state == 1) && (sensor1_current_state == 0)) { return 1; }
     else { return 0; }
+}
+
+// Ham kiem tra gia tri hop le cua ky tu nhap tu HC05
+bool isValidChar(char c) {
+    return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F');
+}
+
+// Ham lay gia tri hop le tu HC05
+char getValidCharFromHC05() {
+    char c;
+    do {
+        while (mySerial.available() == 0) {} // Cho den khi co du lieu
+        c = mySerial.read();
+    } while (!isValidChar(c));
+    return c;
 }
 
 void setup() {
@@ -274,14 +291,19 @@ void loop() {
     if( mySerial.available() > 0 ) {
         val = mySerial.read();
         delay(200);
+        // Neu gia tri val khong phai ky tu hop le thi gan lai val = ' ', 
+        // ki tu hop le la: '0', '1','2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+        if ( isValidChar( val ) == false ) {
+            val = ' ';
+        }
     }
 
     // Xac nhan mat khau dieu khien
     if ( control_mode == false && val == '8' ) { // nhan 8 de bat dau nhap mat khau
         control_buzzer(BIP_1); // Kich hoat buzzer 1 bip
         for ( i = 0; i < 2; i++ ) {
-            while( mySerial.available() == 0 ) {} // Cho den khi co du lieu
-            password_input[i] = mySerial.read() - '0'; // Chuyen ky tu sang so
+            val = getValidCharFromHC05();
+            password_input[i] = val - '0'; // Chuyen ky tu sang so
             control_buzzer(BIP_1); // Kich hoat buzzer 1 bip
         }
 
@@ -298,6 +320,7 @@ void loop() {
         if( control_mode == true ) {
             delay(300);
             control_buzzer(BIP_1); // Kich hoat buzzer 2 bip
+            val = ' ';
         }
         else {
             delay(300);
