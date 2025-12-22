@@ -1,16 +1,17 @@
 #include <SoftwareSerial.h> // C:\Users\Hii\AppData\Local\Arduino15\packages\arduino\hardware\avr\1.8.6\libraries\SoftwareSerial\src
-SoftwareSerial mySerial(7, 8); //Pin6 RX , Pin 7 TX connected to--> Bluetooth TX,RX
+SoftwareSerial mySerial(7, 8); //Pin7 RX , Pin 8 TX connected to--> Bluetooth TX,RX
 
 const int Sensor1 = 3; // Sensor cua 1, phia duoi, co tac dong -> LOW, khong tac dong -> HIGH
-const int Sensor2 = 4; // Sensor cua 2, phia tren, co tac dong -> LOW, khong tac dong -> HIGH, du phong khong dung
+const int Relay1  = 4; // Relay bat den
 const int Sensor3 = 5; // Sensor chot cua, co tac dong -> LOW, khong tac dong -> HIGH
 const int Sensor4 = 6; // Sensor tat buzzer2, co tac dong -> LOW, khong tac dong -> HIGH
 
-const int Relay1 = 13; // Relay bat den
 const int Relay2 = 12; // Relay bat quat
 const int Relay4 = 11; // Relay bat may tinh
-const int Buzzer = 2; // ?????????????????????????????????????????????????? 10
+const int Buzzer = 10;
 const int Coi    = 9;
+
+const int Relay3 = 2; // Relay bat loa
 
 #define BIP_1      1
 #define BIP_2      2
@@ -27,7 +28,7 @@ unsigned long currentMillis = 0;
 const unsigned long interval = 12000; // 12 giay
 const unsigned long interval2 = 5000; // 5 giay
 char val = ' ';
-String statusRelay1,statusRelay2, data;
+String statusRelay1,statusRelay2,statusRelay3, data;
 const uint8_t PASSWORD_VALUE[2] = {3,1}; // mang luu gia tri mat khau dung
 uint8_t password_input[2]; // mang luu gia tri mat khau nhap
 uint8_t i;
@@ -127,7 +128,7 @@ int down_edge_detector_Sensor1() {
 
 // Ham kiem tra gia tri hop le cua ky tu nhap tu HC05
 bool isValidChar(char c) {
-    return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'F');
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f' || 's');
 }
 
 // Ham lay gia tri hop le tu HC05
@@ -143,12 +144,12 @@ char getValidCharFromHC05() {
 void setup() {
     delay(5000);
     pinMode(Sensor1, INPUT);
-    pinMode(Sensor2, INPUT);
     pinMode(Sensor3, INPUT);
     pinMode(Sensor4, INPUT);
     
     pinMode(Relay1, OUTPUT);
     pinMode(Relay2, OUTPUT);
+    pinMode(Relay3, OUTPUT);
     pinMode(Relay4, OUTPUT);
     pinMode(Buzzer, OUTPUT);
     pinMode(Coi, OUTPUT);
@@ -158,11 +159,14 @@ void setup() {
 
     digitalWrite(Relay1, LOW);
     digitalWrite(Relay2, LOW);
+    digitalWrite(Relay3, LOW);
     digitalWrite(Relay4, LOW);
     digitalWrite(Buzzer, LOW);
     digitalWrite(Coi, LOW);
-    statusRelay1 = "A"; // Trang thai A: Tat, 1: Bat
-    statusRelay2 = "B"; // Trang thai B: Tat, 2: Bat
+    statusRelay1 = "a"; // Trang thai a: Tat, 1: Bat
+    statusRelay2 = "b"; // Trang thai b: Tat, 2: Bat
+    statusRelay3 = "c"; // Trang thai c: Tat, 3: Bat
+
     data = "";
     i = 0;
 
@@ -214,17 +218,15 @@ void loop() {
         while (digitalReadAdj(Sensor4) == LOW) {} // Cho den khi khong con tac dong
         currentMillis = millis();
         if (currentMillis - previousMillis >= interval2) {
+            temp = 0;
             if (isProtected == 0) { control_buzzer(BIP_4); } // Kich hoat buzzer bao tat chuc nang bao ve
             else if (isProtected == 1) { control_buzzer(BIP_2); } // Kich hoat buzzer 2 bip
             else if (isProtected == 2) { control_buzzer(BIP_1); } // Kich hoat buzzer 1 bip
         }
-        else {
-            temp++;
-        }
     }
 
     // Phan code tu dong tat den
-    if ((down_edge_detector_Sensor1()) && (isProtected == 0)) {
+    if ((isProtected == 0) && (digitalReadAdj(Sensor1) == LOW) && (digitalReadAdj(Sensor3) == HIGH)) {
         isProtected = 1;
         control_buzzer(BIP_2); // Kich hoat buzzer 2 bip
         delay(5000); // Cho 5 giay
@@ -283,8 +285,13 @@ void loop() {
     {
         control_buzzer(BIP_2); // Kich hoat buzzer 2 bip
     }
-    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    if ((isProtected == 0) && (digitalReadAdj(Sensor3) == HIGH)) { // Chot cua duoc mo
+        control_buzzer(BIP_1); // Kich hoat buzzer 1 bip
+        delay(30000); // Cho 30 giay
+    }
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////DK RELAY BANG HC05//////////////////////////////////////////
 
@@ -292,7 +299,7 @@ void loop() {
         val = mySerial.read();
         delay(200);
         // Neu gia tri val khong phai ky tu hop le thi gan lai val = ' ', 
-        // ki tu hop le la: '0', '1','2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+        // ki tu hop le la: '0', '1','2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 's'
         if ( isValidChar( val ) == false ) {
             val = ' ';
         }
@@ -300,11 +307,9 @@ void loop() {
 
     // Xac nhan mat khau dieu khien
     if ( control_mode == false && val == '8' ) { // nhan 8 de bat dau nhap mat khau
-        control_buzzer(BIP_1); // Kich hoat buzzer 1 bip
         for ( i = 0; i < 2; i++ ) {
             val = getValidCharFromHC05();
             password_input[i] = val - '0'; // Chuyen ky tu sang so
-            control_buzzer(BIP_1); // Kich hoat buzzer 1 bip
         }
 
         // Kiem tra mat khau
@@ -319,12 +324,12 @@ void loop() {
         // Bao hieu ket qua xac nhan mat khau
         if( control_mode == true ) {
             delay(300);
-            control_buzzer(BIP_1); // Kich hoat buzzer 2 bip
+            control_buzzer(BIP_2);
             val = ' ';
         }
         else {
             delay(300);
-            control_buzzer(BIP_3); // Kich hoat buzzer 4 bip
+            control_buzzer(BIP_4); // Kich hoat buzzer 4 bip
         }
     }
     
@@ -333,22 +338,38 @@ void loop() {
     {
         // Relay 1 on
         if( val == '1' ) {
-            digitalWrite(Relay1,HIGH); statusRelay1="1"; }
+            digitalWrite(Relay1,HIGH); statusRelay1="1"; control_buzzer(BIP_2); }
         // Relay 2 on
         else if( val == '2' ) {
-            digitalWrite(Relay2,HIGH); statusRelay2="2";}
+            digitalWrite(Relay2,HIGH); statusRelay2="2"; control_buzzer(BIP_2); }
+        // Relay 3 on
+        else if( val == '3' ) {
+            digitalWrite(Relay3,HIGH); statusRelay3="3"; control_buzzer(BIP_2); }
         // Relay 1 off
-        else if( val == 'A' ) {
-            digitalWrite(Relay1,LOW); statusRelay1="A";}
+        else if( val == 'a' ) {
+            digitalWrite(Relay1,LOW); statusRelay1="a"; control_buzzer(BIP_1); }
         // Relay 2 off
-        else if( val == 'B' ) {
-            digitalWrite(Relay2,LOW); statusRelay2="B";}
+        else if( val == 'b' ) {
+            digitalWrite(Relay2,LOW); statusRelay2="b"; control_buzzer(BIP_1); }
+        // Relay 3 off
+        else if( val == 'c' ) {
+            digitalWrite(Relay3,LOW); statusRelay3="c"; control_buzzer(BIP_1); }
     }
 
     // Thoat che do dieu khien
     if ( val == '9' && control_mode == true ) { // nhan 9 de thoat che do dieu khien
         control_mode = false;
         control_buzzer(BIP_4); // Kich hoat buzzer 4 bip
+    }
+
+    // Kiem tra control_mode la true hay false va bao trang thai qua buzzer
+    if (val == 's') {
+        if (control_mode == true) {
+            control_buzzer(BIP_2); // Kich hoat buzzer 2 bip
+        }
+        else {
+            control_buzzer(BIP_4); // Kich hoat buzzer 4 bip
+        }
     }
     
     val=' ';
