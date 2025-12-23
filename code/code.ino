@@ -17,6 +17,7 @@ const int Relay3 = 2; // Relay bat loa
 #define BIP_2      2
 #define BIP_3      3
 #define BIP_4      4
+#define BIP_6      6 // 6 bip, PHAN CODE TEST-----------------------------------------------------------------------------------------------
 
 uint8_t isProtected = 0;
 bool isFirstRun = true;
@@ -99,6 +100,33 @@ void control_buzzer(uint8_t para) {
         digitalWrite(Buzzer, LOW);
         delay(2000);
     }
+    if (para == BIP_6) // 6 bip, PHAN CODE TEST-----------------------------------------------------------------------------------------------
+    {
+        digitalWrite(Buzzer, HIGH);
+        delay(500);
+        digitalWrite(Buzzer, LOW);
+        delay(2000);
+        digitalWrite(Buzzer, HIGH);
+        delay(500);
+        digitalWrite(Buzzer, LOW);
+        delay(2000);
+        digitalWrite(Buzzer, HIGH);
+        delay(500);
+        digitalWrite(Buzzer, LOW);
+        delay(2000);
+        digitalWrite(Buzzer, HIGH);
+        delay(500);
+        digitalWrite(Buzzer, LOW);
+        delay(2000);
+        digitalWrite(Buzzer, HIGH);
+        delay(500);
+        digitalWrite(Buzzer, LOW);
+        delay(2000);
+        digitalWrite(Buzzer, HIGH);
+        delay(500);
+        digitalWrite(Buzzer, LOW);
+        delay(2000);
+    }
 }
 
 int digitalReadAdj(int pin) { // Tra ve gia tri 0 hoac 1 sau khi loc nhieu lan
@@ -157,7 +185,7 @@ void setup() {
     mySerial.begin(9600);
     Serial.begin(9600);
 
-    digitalWrite(Relay1, LOW);
+    digitalWrite(Relay1, HIGH);
     digitalWrite(Relay2, LOW);
     digitalWrite(Relay3, LOW);
     digitalWrite(Relay4, LOW);
@@ -251,6 +279,7 @@ void loop() {
             temp = 0;
             digitalWrite(Relay1, HIGH); // Bat den
             previousMillisSet = true;
+            delay(20000); // Cho 20 giay
         }
 
         currentMillis = millis();
@@ -263,18 +292,24 @@ void loop() {
                 digitalWrite(Relay4, HIGH);
                 delay(800); // Cho 800 ms
                 digitalWrite(Relay4, LOW); // Bat may tinh
+                delay(1000); // Cho 1 giay, PHAN CODE TEST-------------------------------------------------------------------------------------
+                control_buzzer(BIP_6); // Kich hoat buzzer 6 bip, PHAN CODE TEST---------------------------------------------------------------
 
                 digitalWrite(Coi, HIGH); // Kich hoat Coi
+                digitalWrite(Buzzer, HIGH); // Kich hoat Buzzer, PHAN CODE TEST----------------------------------------------------------------
                 delay(30000); // Cho 30 giay
                 digitalWrite(Coi, LOW); // Tat coi
+                digitalWrite(Buzzer, LOW); // Tat Buzzer, PHAN CODE TEST-----------------------------------------------------------------------
                 delay(10000); // Cho 10 giay
                 isFirstRun = false;
             }
 
             if (!isFirstRun) {
                 digitalWrite(Coi, HIGH); // Kich hoat Coi
+                digitalWrite(Buzzer, HIGH); // Kich hoat Buzzer, PHAN CODE TEST----------------------------------------------------------------
                 delay(5000); // Cho 5 giay
                 digitalWrite(Coi, LOW); // Tat coi
+                digitalWrite(Buzzer, LOW); // Tat Buzzer, PHAN CODE TEST-----------------------------------------------------------------------
                 delay(60000); // Cho 60 giay
             }
             previousMillisSet = true;
