@@ -170,7 +170,7 @@ char getValidCharFromHC05() {
 }
 
 void setup() {
-    delay(5000);
+    delay(10000); // Cho 10 giay
     pinMode(Sensor1, INPUT);
     pinMode(Sensor3, INPUT);
     pinMode(Sensor4, INPUT);
@@ -200,7 +200,7 @@ void setup() {
 
     // Phat am thanh qua buzzer de bao he thong khoi dong
     control_buzzer(BIP_2); // Kich hoat buzzer 2 bip
-    delay(5000); // Cho 5 giay
+    delay(10000); // Cho 10 giay
 
 }
 
