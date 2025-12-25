@@ -5,7 +5,7 @@ SoftwareSerial mySerial(7, 8); //Pin7 RX , Pin 8 TX connected to--> Bluetooth TX
 const int Sensor1 = 3; // Sensor cua 1, phia duoi, co tac dong -> LOW, khong tac dong -> HIGH
 const int Relay1  = 4; // Relay bat den
 const int Sensor3 = 5; // Sensor chot cua, co tac dong -> LOW, khong tac dong -> HIGH, da thay doi sang cam bien cua
-const int Sensor4 = 6; // Sensor tat buzzer2, co tac dong -> LOW, khong tac dong -> HIGH
+const int Sensor4 = 6; // Sensor tat buzzer2, co tac dong -> LOW, khong tac dong -> HIGH, da thay doi sang cam bien cua
 
 const int Relay2 = 12; // Relay bat quat
 const int Relay4 = 11; // Relay bat may tinh
@@ -135,12 +135,12 @@ int down_edge_detector_Sensor1() {
 
 // Ham kiem tra gia tri hop le cua ky tu nhap tu HC05
 // 's' de kiem tra trang thai isProtected
-// 'p' de kich hoat isProtected = 1
-// 'z' de kich hoat isProtected = 1 va tat den
-// 'q' de kich hoat isProtected = 0
+// 'p' de kich hoat isProtected = 1, tat den va thoat che do dieu khien
+// 'q' de kich hoat isProtected = 0 va bat den
+// 'u' de kich hoat isProteced = 0
 // 'r' de reset he thong
 bool isValidChar(char c) {
-    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f' || 's' || 'p' || 'q' || 'r' || 'z');
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f' || 's' || 'p' || 'q' || 'u' || 'r');
 }
 
 // Ham lay gia tri hop le tu HC05
@@ -203,10 +203,10 @@ void loop() {
 
     /////////////////////////////////////////////////BEGIN CODE MOI//////////////////////////////////////////////////////////////////
 
-    if ((isProtected == true) && (digitalReadAdj(Sensor3) == HIGH)) { // Chot cua duoc mo
+    if ((isProtected == true) && ((digitalReadAdj(Sensor3) == HIGH) || digitalReadAdj(Sensor4) == HIGH)) { // Chot cua duoc mo
         delay(7000); // Cho 7 giay
-        // Kiem tra lai trang thai cua Sensor3
-        if (digitalReadAdj(Sensor3) == HIGH) {
+        // Kiem tra lai trang thai cua Sensor3 va Sensor4
+        if ((digitalReadAdj(Sensor3) == HIGH) || (digitalReadAdj(Sensor4) == HIGH)) {
             if (isFirstRun == true) {
 
                 digitalWrite(Relay4, HIGH);
@@ -362,7 +362,7 @@ void loop() {
         val = mySerial.read();
         delay(200);
         // Neu gia tri val khong phai ky tu hop le thi gan lai val = ' ', 
-        // ki tu hop le la: '0', '1','2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 's', 'p', 'q', 'r'
+        // ki tu hop le la: '0', '1','2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 's', 'p', 'q', 'u', 'r'
         if ( isValidChar( val ) == false ) {
             val = ' ';
         }
@@ -410,7 +410,8 @@ void loop() {
             digitalWrite(Relay3,HIGH); statusRelay3="3"; control_buzzer(BIP_2); }
         // Relay 1 off
         else if( val == 'a' ) {
-            delay(30000); // Cho 30 giay
+            control_buzzer(BIP_1); // Kich hoat buzzer 1 bip
+            delay(60000); // Cho 60 giay
             digitalWrite(Relay1,LOW); statusRelay1="a"; control_buzzer(BIP_1); }
         // Relay 2 off
         else if( val == 'b' ) {
@@ -418,20 +419,25 @@ void loop() {
         // Relay 3 off
         else if( val == 'c' ) {
             digitalWrite(Relay3,LOW); statusRelay3="c"; control_buzzer(BIP_1); }
-        // Bat isProtected = true
+        // Bat isProtected = true, tat den va thoat che do dieu khien
         else if( val == 'p' ) {
-            val = ' ';
-            isProtected = true; control_buzzer(BIP_2); }
-        // Bat isProtected = true va tat den
-        else if( val == 'z' ) {
             control_buzzer(BIP_2); // Kich hoat buzzer 2 bip
             delay(20000); // Cho 20 giay
             val = ' ';
             isProtected = true;
+            control_mode = false;
             digitalWrite(Relay1, LOW); statusRelay1="a"; // Tat den
             control_buzzer(BIP_2); } // Kich hoat buzzer 2 bip
+        // Tat isProtected = false va bat den
+        else if ( val == 'q' ) {
+            val = ' ';
+            isProtected = false;
+            digitalWrite(Relay1,HIGH); 
+            statusRelay1="1"; 
+            control_buzzer(BIP_2); // Kich hoat buzzer 2 bip
+            }
         // Tat isProtected = false
-        else if( val == 'q' ) {
+        else if( val == 'u' ) {
             val = ' ';
             isProtected = false; control_buzzer(BIP_4); }
         // Reset he thong
@@ -463,7 +469,7 @@ void loop() {
 
     ///////////////////////////////////END DK RELAY BANG HC05//////////////////////////////////////
 
-    ///////////////////////////////////DK COI QUA CONG SERIAL MAY TINH///////////////////////////////////////
+    ///////////////////////////////////DK QUA CONG SERIAL MAY TINH///////////////////////////////////////
 
     if (Serial.available() > 0)
     {
@@ -471,17 +477,15 @@ void loop() {
         if (data == "batcoi")
         {
             digitalWrite(Coi, HIGH);
-            digitalWrite(Buzzer, HIGH); // Kich hoat Buzzer, PHAN CODE TEST----------------------------------------------------------------
             Serial.println("Dabatcoi");
             delay(25000); // Cho 25 giay
             digitalWrite(Coi, LOW);
-            digitalWrite(Buzzer, LOW); // Tat Buzzer, PHAN CODE TEST-----------------------------------------------------------------------
             Serial.println("Datatcoi");
             delay(10000); // Cho 10 giay
         }
     }
 
-    ///////////////////////////////END DK COI QUA CONG SERIAL MAY TINH///////////////////////////////////////
+    ///////////////////////////////END DK QUA CONG SERIAL MAY TINH///////////////////////////////////////
 
     // // Cap nhat trang thai bien
     // sensor3_previous_state = sensor3_current_state;
