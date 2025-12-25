@@ -1,5 +1,6 @@
 #include <SoftwareSerial.h> // C:\Users\Hii\AppData\Local\Arduino15\packages\arduino\hardware\avr\1.8.6\libraries\SoftwareSerial\src
 #include <avr/wdt.h>
+#include <string.h>
 SoftwareSerial mySerial(7, 8); //Pin7 RX , Pin 8 TX connected to--> Bluetooth TX,RX
 
 const int Sensor1 = 3; // Sensor cua 1, phia duoi, co tac dong -> LOW, khong tac dong -> HIGH
@@ -170,7 +171,7 @@ void setup() {
     mySerial.begin(9600);
     Serial.begin(9600);
 
-    digitalWrite(Relay1, HIGH);
+    digitalWrite(Relay1, LOW);
     digitalWrite(Relay2, LOW);
     digitalWrite(Relay3, LOW);
     digitalWrite(Relay4, LOW);
@@ -183,7 +184,7 @@ void setup() {
     data = "";
     i = 0;
 
-    isProtected = false;
+    isProtected = false; // Mac dinh la true---------------------------------------------------------------------------------------------------
     isFirstRun = true;
     isFirstRun2 = true;
     temp = 0;
@@ -215,20 +216,10 @@ void loop() {
 
                 digitalWrite(Coi, HIGH); // Kich hoat Coi
                 digitalWrite(Buzzer, HIGH); // Kich hoat Buzzer, PHAN CODE TEST----------------------------------------------------------------
-                delay(30000); // Cho 30 giay
-                digitalWrite(Coi, LOW); // Tat coi
-                digitalWrite(Buzzer, LOW); // Tat Buzzer, PHAN CODE TEST-----------------------------------------------------------------------
-                delay(10000); // Cho 10 giay
-                isFirstRun = false;
-            }
-
-            if (isFirstRun == false) {
-                digitalWrite(Coi, HIGH); // Kich hoat Coi
-                digitalWrite(Buzzer, HIGH); // Kich hoat Buzzer, PHAN CODE TEST----------------------------------------------------------------
-                delay(3000); // Cho 3 giay
-                digitalWrite(Coi, LOW); // Tat coi
-                digitalWrite(Buzzer, LOW); // Tat Buzzer, PHAN CODE TEST-----------------------------------------------------------------------
                 delay(60000); // Cho 60 giay
+                digitalWrite(Coi, LOW); // Tat coi
+                digitalWrite(Buzzer, LOW); // Tat Buzzer, PHAN CODE TEST-----------------------------------------------------------------------
+                isFirstRun = false;
             }
         }
     }
@@ -476,6 +467,7 @@ void loop() {
         data=Serial.readStringUntil('\r');
         if (data == "batcoi")
         {
+            control_buzzer(BIP_4); // Kich hoat buzzer 4 bip, PHAN CODE TEST---------------------------------------------------------------
             digitalWrite(Coi, HIGH);
             Serial.println("Dabatcoi");
             delay(25000); // Cho 25 giay
