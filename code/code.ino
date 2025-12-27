@@ -3,10 +3,10 @@
 #include <string.h>
 SoftwareSerial mySerial(7, 8); //Pin7 RX , Pin 8 TX connected to--> Bluetooth TX,RX
 
-const int Sensor1 = 3; // Sensor cua 1, phia duoi, co tac dong -> LOW, khong tac dong -> HIGH
+const int Sensor1 = 3; // Sensor cua 1, phia duoi, co tac dong -> LOW, khong tac dong -> HIGH, dang su dung
 const int Relay1  = 4; // Relay bat den
-const int Sensor3 = 5; // Sensor chot cua, co tac dong -> LOW, khong tac dong -> HIGH, da thay doi sang cam bien cua
-const int Sensor4 = 6; // Sensor tat buzzer2, co tac dong -> LOW, khong tac dong -> HIGH, da thay doi sang cam bien cua
+const int Sensor3 = 5; // Sensor chot cua, co tac dong -> LOW, khong tac dong -> HIGH, khong dung nua
+const int Sensor4 = 6; // Sensor tat buzzer2, co tac dong -> LOW, khong tac dong -> HIGH, khong dung nua
 
 const int Relay2 = 12; // Relay bat quat
 const int Relay4 = 11; // Relay bat may tinh
@@ -158,8 +158,6 @@ void setup() {
 
     delay(10000); // Cho 10 giay
     pinMode(Sensor1, INPUT);
-    pinMode(Sensor3, INPUT);
-    pinMode(Sensor4, INPUT);
     
     pinMode(Relay1, OUTPUT);
     pinMode(Relay2, OUTPUT);
@@ -184,7 +182,7 @@ void setup() {
     data = "";
     i = 0;
 
-    isProtected = false; // Mac dinh la true---------------------------------------------------------------------------------------------------
+    isProtected = true;
     isFirstRun = true;
     isFirstRun2 = true;
     temp = 0;
@@ -204,10 +202,10 @@ void loop() {
 
     /////////////////////////////////////////////////BEGIN CODE MOI//////////////////////////////////////////////////////////////////
 
-    if ((isProtected == true) && ((digitalReadAdj(Sensor3) == HIGH) || digitalReadAdj(Sensor4) == HIGH)) { // Chot cua duoc mo
+    if ((isProtected == true) && (digitalReadAdj(Sensor1) == HIGH)) { // Chot cua duoc mo
         delay(7000); // Cho 7 giay
         // Kiem tra lai trang thai cua Sensor3 va Sensor4
-        if ((digitalReadAdj(Sensor3) == HIGH) || (digitalReadAdj(Sensor4) == HIGH)) {
+        if (digitalReadAdj(Sensor1) == HIGH) {
             if (isFirstRun == true) {
 
                 digitalWrite(Relay4, HIGH);
@@ -215,10 +213,10 @@ void loop() {
                 digitalWrite(Relay4, LOW); // Bat may tinh
 
                 digitalWrite(Coi, HIGH); // Kich hoat Coi
-                digitalWrite(Buzzer, HIGH); // Kich hoat Buzzer, PHAN CODE TEST----------------------------------------------------------------
+                digitalWrite(Buzzer, HIGH); // Kich hoat Buzzer
                 delay(60000); // Cho 60 giay
                 digitalWrite(Coi, LOW); // Tat coi
-                digitalWrite(Buzzer, LOW); // Tat Buzzer, PHAN CODE TEST-----------------------------------------------------------------------
+                digitalWrite(Buzzer, LOW); // Tat Buzzer
                 isFirstRun = false;
             }
         }
@@ -402,7 +400,7 @@ void loop() {
         // Relay 1 off
         else if( val == 'a' ) {
             control_buzzer(BIP_1); // Kich hoat buzzer 1 bip
-            delay(60000); // Cho 60 giay
+            delay(90000); // Cho 90 giay
             digitalWrite(Relay1,LOW); statusRelay1="a"; control_buzzer(BIP_1); }
         // Relay 2 off
         else if( val == 'b' ) {
@@ -467,11 +465,12 @@ void loop() {
         data=Serial.readStringUntil('\r');
         if (data == "batcoi")
         {
-            control_buzzer(BIP_4); // Kich hoat buzzer 4 bip, PHAN CODE TEST---------------------------------------------------------------
+            digitalWrite(Buzzer, HIGH); // Kich hoat Buzzer
             digitalWrite(Coi, HIGH);
             Serial.println("Dabatcoi");
             delay(25000); // Cho 25 giay
             digitalWrite(Coi, LOW);
+            digitalWrite(Buzzer, LOW);
             Serial.println("Datatcoi");
             delay(10000); // Cho 10 giay
         }
